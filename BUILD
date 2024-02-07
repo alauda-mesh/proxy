@@ -34,6 +34,7 @@ envoy_cc_binary(
     repository = "@envoy",
     deps = [
         "//extensions/access_log_policy:access_log_policy_lib",
+        "//extensions/attributegen:attributegen_plugin",
         "//extensions/stackdriver:stackdriver_plugin",
         "//source/extensions/common/workload_discovery:api_lib",  # Experimental: WIP
         "//source/extensions/filters/http/alpn:config_lib",
