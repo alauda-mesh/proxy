@@ -120,7 +120,8 @@ bool peerInfoRead(Reporter reporter, const StreamInfo::FilterState& filter_state
           ? "wasm.downstream_peer_id"
           : "wasm.upstream_peer_id";
   return filter_state.hasDataWithName(filter_state_key) ||
-         filter_state.hasDataWithName("envoy.wasm.metadata_exchange.peer_unknown");
+         filter_state.hasDataWithName(
+             "wasm.envoy.wasm.metadata_exchange.peer_unknown"); // kMetadataPrefix+kMetadataNotFoundValue
 }
 
 const Wasm::Common::FlatNode* peerInfo(Reporter reporter,
@@ -1025,6 +1026,7 @@ private:
       if (cluster_info && cluster_info.value()) {
         const auto& cluster_name = cluster_info.value()->name();
         if (cluster_name == "BlackHoleCluster" || cluster_name == "PassthroughCluster" ||
+            cluster_name == "InboundPassthroughCluster" ||
             cluster_name == "InboundPassthroughClusterIpv4" ||
             cluster_name == "InboundPassthroughClusterIpv6") {
           service_host_name = cluster_name;
