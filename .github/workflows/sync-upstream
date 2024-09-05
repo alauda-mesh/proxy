@@ -1,0 +1,20 @@
+name: "🔄 Sync Upstream"
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+
+jobs:
+  autoupdate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.UPSTREAM_SYNC_PAT }}
+        
+    - uses: fopina/upstream-to-pr@v
+      with:
+          token: ${{ secrets.PAT }}
+          upstream-repository: https://github.com/istio/proxy
+          upstream-branch: release-1.22
