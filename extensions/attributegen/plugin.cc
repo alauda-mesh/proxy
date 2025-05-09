@@ -14,11 +14,11 @@
  */
 
 #include "extensions/attributegen/plugin.h"
+#include "extensions/attributegen/util.h"
 
 #include "absl/strings/match.h"
 #include "absl/strings/str_replace.h"
 #include "absl/strings/str_split.h"
-#include "extensions/common/util.h"
 
 // WASM_PROLOG
 #ifndef NULL_PLUGIN

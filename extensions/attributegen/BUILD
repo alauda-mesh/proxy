@@ -41,11 +41,25 @@ envoy_cc_library(
     repository = "@envoy",
     visibility = ["//visibility:public"],
     deps = [
-        "//extensions/common:context",
         ":config_cc_proto",
+        ":util",
         "@proxy_wasm_cpp_host//:null_lib",
         "@proxy_wasm_cpp_sdk//contrib:contrib_lib",
         "@envoy//source/common/common:base64_lib",
+    ],
+)
+
+envoy_cc_library(
+    name = "util",
+    srcs = [
+        "util.cc",
+    ],
+    hdrs = [
+        "util.h",
+    ],
+    repository = "@envoy",
+    deps = [
+        "@proxy_wasm_cpp_host//:null_lib",
     ],
 )
 
@@ -84,5 +98,15 @@ envoy_extension_cc_test(
         "@envoy//test/test_common:environment_lib",
         "@envoy//test/test_common:utility_lib",
         "@envoy//test/test_common:wasm_lib",
+    ],
+)
+
+envoy_cc_test(
+    name = "util_test",
+    size = "small",
+    srcs = ["util_test.cc"],
+    repository = "@envoy",
+    deps = [
+        ":util",
     ],
 )
