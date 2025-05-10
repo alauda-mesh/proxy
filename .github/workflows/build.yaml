@@ -1,0 +1,89 @@
+name: Build Istio Proxy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["istio-1.24"]
+    tags: ["1.24.*"]
+  pull_request_target:
+    branches: ["istio-1.24"]
+    types: [opened, synchronize, reopened]
+
+env:
+  http_proxy: ${{ vars.http_proxy }}
+  https_proxy: ${{ vars.https_proxy }}
+  no_proxy: ${{ vars.no_proxy }}
+
+jobs:
+  build:
+    name: Build (${{ matrix.machine-arch }})
+    runs-on: [self-hosted, linux, "${{ matrix.machine-arch }}"]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        machine-arch: [arm64, x64]
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Build Envoy
+        env:
+          TOOLS_REGISTRY_PROVIDER: gcr.m.daocloud.io
+          IMAGE_NAME: build-tools-proxy
+          IMAGE_VERSION: release-1.24-bccd228953b7abf90170da1419699d38e95329fb
+          BAZELISK_BASE_URL: https://mirrors.huaweicloud.com/bazel
+
+        run: |
+          echo ">> Build Envoy"
+          BUILD_WITH_CONTAINER=1 make \
+            BAZEL_CONFIG_CURRENT="--config=release" \
+            BAZEL_TARGETS="//:envoy_tar //:envoy.dwp" \
+            build
+
+          mkdir -p ./out
+          common/scripts/run.sh \
+            cp /work/bazel-bin/envoy /work/bazel-bin/envoy_tar.tar.gz /work/bazel-bin/envoy.dwp ./out
+          echo ">> Envoy version: "
+          ./out/envoy --version
+
+      - uses: actions/setup-python@v5
+        if: ${{ github.event_name == 'push' }}
+        with:
+          python-version: '3.13'
+
+      - name: Set up S3cmd
+        uses: s3-actions/s3cmd@v2.0.0
+        if: ${{ github.event_name == 'push' }}
+        with:
+          provider: cloudflare
+          access_key: ${{ secrets.R2_ACCESS_KEY }}
+          secret_key: ${{ secrets.R2_SECRET_KEY }}
+          account_id: ${{ secrets.R2_ACCOUNT_ID }}
+
+      - name: Upload Artifacts
+        if: ${{ github.event_name == 'push' }}
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          ARCH_SUFFIX=""
+          if [ "${{ matrix.machine-arch }}" = "arm64" ]; then
+            ARCH_SUFFIX="-arm64"
+          fi
+
+          # Defines the base binary name for artifacts. For example, this will be "envoy-debug".
+          BASE_BINARY_NAME=envoy
+          BINARY_BASE_NAME="${BASE_BINARY_NAME}-alpha"
+          # Result artifacts
+          BINARY_NAME="./out/${BINARY_BASE_NAME}-${SHA}${ARCH_SUFFIX}.tar.gz"
+          DWP_NAME="./out/${BINARY_BASE_NAME}-${SHA}${ARCH_SUFFIX}.dwp"
+          SHA256_NAME="./out/${BINARY_BASE_NAME}-${SHA}${ARCH_SUFFIX}.sha256"
+
+          cp -f "./out/envoy_tar.tar.gz" "${BINARY_NAME}"
+          cp -f "./out/envoy.dwp" "${DWP_NAME}"
+          sha256sum "${BINARY_NAME}" > "${SHA256_NAME}"
+
+          echo "Copying ${BINARY_NAME} "${DWP_NAME}" ${SHA256_NAME}"
+          s3cmd put "${BINARY_NAME}" "${DWP_NAME}" "${SHA256_NAME}" \
+            s3://alauda-istio-build/proxy/

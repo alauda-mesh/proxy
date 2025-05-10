@@ -27,7 +27,7 @@ ENVOY_SHA = "3f95dcb62e85cc87b59ebcca9e8fbf882bd547b0"
 
 ENVOY_SHA256 = "bde3e6398a7c0c79cdd5da798e6ae8749992bd522f21d6407e825bcc65d8f1a4"
 
-ENVOY_ORG = "envoyproxy"
+ENVOY_ORG = "alauda-mesh"
 
 ENVOY_REPO = "envoy"
 

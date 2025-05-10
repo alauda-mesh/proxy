@@ -32,6 +32,7 @@ config_setting(
 
 ISTIO_EXTENSIONS = [
     "//source/extensions/common/workload_discovery:api_lib",  # Experimental: WIP
+    "//extensions/attributegen:attributegen_plugin",
     "//source/extensions/filters/http/alpn:config_lib",
     "//source/extensions/filters/http/istio_stats",
     "//source/extensions/filters/http/peer_metadata:filter_lib",
